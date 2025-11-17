@@ -1,0 +1,8 @@
+.vscode/**
+node_modules/**
+*.vsix
+test/**
+src/**
+out/test/**
+.vscode-test/**
+pnpm-lock.yaml

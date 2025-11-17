@@ -1,0 +1,93 @@
+{
+  "name": "remove-empty-folders",
+  "displayName": "Remove Empty Folders",
+  "version": "1.0.0",
+  "description": "VS Code extension to find and optionally remove empty folders from the workspace or a selected folder.",
+  "publisher": "NotCarlosSerrano",
+  "engines": {
+    "vscode": "^1.77.0"
+  },
+  "activationEvents": [
+    "onCommand:removeEmptyFolders.cleanWorkspace",
+    "onCommand:removeEmptyFolders.cleanFromFolder"
+  ],
+  "main": "./out/src/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NotCarlosSerrano/vscode-remove-empty-folders"
+  },
+  "bugs": {
+    "url": "https://github.com/NotCarlosSerrano/vscode-remove-empty-folders/issues"
+  },
+  "homepage": "https://github.com/NotCarlosSerrano/vscode-remove-empty-folders#readme",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -p ./ -w",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "test:integration": "node ./out/test/runVSCodeTest.js",
+    "test:integration:debug": "node --inspect-brk ./out/test/runVSCodeTest.js",
+    "package": "vsce package"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "removeEmptyFolders.cleanWorkspace",
+        "title": "Remove Empty Folders: Clean Workspace",
+        "category": "Remove Empty Folders"
+      },
+      {
+        "command": "removeEmptyFolders.cleanFromFolder",
+        "title": "Remove Empty Folders: Clean From Folder",
+        "category": "Remove Empty Folders"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "removeEmptyFolders.cleanFromFolder",
+          "when": "resourceLangId != markdown",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "Remove Empty Folders",
+      "properties": {
+        "removeEmptyFolders.includeHidden": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include hidden files and folders when deciding whether a folder is empty (dotfiles and dotfolders)."
+        },
+        "removeEmptyFolders.ignorePatterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [".git", "node_modules", ".vscode"],
+          "description": "Globs or simple patterns to exclude from consideration (avoid deleting folders that contain these)."
+        },
+        "removeEmptyFolders.confirmBeforeDelete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a confirmation if the number of folders to delete exceeds the threshold."
+        },
+        "removeEmptyFolders.confirmThreshold": {
+          "type": "number",
+          "default": 50,
+          "description": "Number of folders above which the user will be asked to confirm deletion."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/mocha": "^10.0.10",
+    "@types/vscode": "^1.77.0",
+    "typescript": "^5.9.3",
+    "@vscode/test-electron": "^2.5.2",
+    "mocha": "^11.7.5",
+    "glob": "^12.0.0",
+    "@types/glob": "^9.0.0"
+  }
+}
