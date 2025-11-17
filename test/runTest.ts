@@ -98,6 +98,25 @@ async function main() {
     } else {
       console.log('Symlink tests skipped.');
     }
+
+    // Test ignoreInitPy option: folder with only __init__.py
+    const initDir = path.join(tempDir, 'initFolder');
+    await fs.mkdir(initDir, { recursive: true });
+    await fs.writeFile(path.join(initDir, '__init__.py'), '');
+
+    // Default: ignoreInitPy=false -> folder should NOT be considered empty
+    const resInitDefault = await getEmptyFolders(initDir, { includeHidden: false, ignorePatterns: [], });
+    assert.ok(!resInitDefault.includes(initDir), 'Folder with __init__.py should NOT be considered empty by default');
+
+    // With ignoreInitPy=true -> folder should be considered empty
+    const resInitIgnored = await getEmptyFolders(initDir, { includeHidden: false, ignorePatterns: [], ignoreInitPy: true });
+    assert.ok(resInitIgnored.includes(initDir), 'Folder with __init__.py should be considered empty when ignoreInitPy=true');
+
+    // Delete when ignoreInitPy true
+    const { deleted: initDeleted } = await deleteFolders(resInitIgnored, { dryRun: false, ignoreInitPy: true });
+    assert.ok(initDeleted.includes(initDir));
+
+    console.log('ignoreInitPy tests passed.');
   } finally {
     // cleanup
     await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});

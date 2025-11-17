@@ -26,6 +26,7 @@ export function registerCleanFromFolderCommand(context: vscode.ExtensionContext,
       const config = vscode.workspace.getConfiguration('removeEmptyFolders');
       const includeHidden: boolean = config.get('includeHidden', false);
       const ignorePatterns: string[] = config.get('ignorePatterns', ['.git', 'node_modules', '.vscode']);
+      const ignoreInitPy: boolean = config.get('ignoreInitPy', false);
       const confirmBeforeDelete: boolean = config.get('confirmBeforeDelete', true);
       const confirmThreshold: number = config.get('confirmThreshold', 50);
 
@@ -33,7 +34,7 @@ export function registerCleanFromFolderCommand(context: vscode.ExtensionContext,
 
       const start = Date.now();
 
-      const results = await getEmptyFolders(fsPath, { includeHidden, ignorePatterns });
+      const results = await getEmptyFolders(fsPath, { includeHidden, ignorePatterns, ignoreInitPy });
 
       if (results.length === 0) {
         const timeMs = Date.now() - start;
@@ -68,7 +69,7 @@ export function registerCleanFromFolderCommand(context: vscode.ExtensionContext,
         return;
       }
 
-      const { deleted, failed } = await deleteFolders(results, { dryRun: false });
+      const { deleted, failed } = await deleteFolders(results, { dryRun: false, ignoreInitPy });
       const timeMs = Date.now() - start;
       logger.info(`Deleted ${deleted.length} folders in ${timeMs}ms (${failed.length} failures).`);
 

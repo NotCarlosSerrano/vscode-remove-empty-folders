@@ -77,6 +77,12 @@
           "default": 50,
           "description": "Number of folders above which the user will be asked to confirm deletion."
         }
+      ,
+        "removeEmptyFolders.ignoreInitPy": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, treat Python __init__.py files as ignorable; folders containing only __init__.py will be considered empty and removed."
+        }
       }
     }
   },

@@ -51,6 +51,24 @@ suite('Extension Test Suite', () => {
       // Assert that 'a' was removed
       const existsA = await exists(a);
       assert.strictEqual(existsA, false, 'Workspace nested folder should be removed by cleanWorkspace');
+
+        // Now test behavior for __init__.py
+        const initDir = path.join(tempDir, 'initFolder');
+        await fs.mkdir(initDir, { recursive: true });
+        await fs.writeFile(path.join(initDir, '__init__.py'), '');
+
+        // run command with default settings (ignoreInitPy=false) - should NOT delete initDir
+        await vscode.commands.executeCommand('removeEmptyFolders.cleanFromFolder', vscode.Uri.file(tempDir));
+        await new Promise(resolve => setTimeout(resolve, 200));
+        let existsInit = await exists(initDir);
+        assert.strictEqual(existsInit, true, '__init__.py folder should not be deleted by default');
+
+        // Enable ignoreInitPy and run again - now it should be removed
+        await vscode.workspace.getConfiguration('removeEmptyFolders').update('ignoreInitPy', true, vscode.ConfigurationTarget.Workspace);
+        await vscode.commands.executeCommand('removeEmptyFolders.cleanFromFolder', vscode.Uri.file(tempDir));
+        await new Promise(resolve => setTimeout(resolve, 200));
+        existsInit = await exists(initDir);
+        assert.strictEqual(existsInit, false, '__init__.py folder should be removed when ignoreInitPy=true');
     } finally {
       (vscode.window as any).showQuickPick = originalQuickPick;
       (vscode.window as any).showWarningMessage = originalWarn;

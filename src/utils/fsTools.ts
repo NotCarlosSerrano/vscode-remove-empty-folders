@@ -4,11 +4,13 @@ import * as path from 'path';
 export interface ScanOptions {
   includeHidden?: boolean;
   ignorePatterns?: string[];
+  ignoreInitPy?: boolean; // if true, treat __init__.py as ignorable (folder with only __init__.py considered empty)
 }
 
 export async function getEmptyFolders(rootPath: string, options: ScanOptions = {}): Promise<string[]> {
   const includeHidden = !!options.includeHidden;
   const ignorePatterns = options.ignorePatterns || ['.git', 'node_modules', '.vscode'];
+  const ignoreInitPy = !!options.ignoreInitPy;
 
   const visited = new Set<string>();
 
@@ -41,6 +43,10 @@ export async function getEmptyFolders(rootPath: string, options: ScanOptions = {
         if (matchesIgnore(name, ignorePatterns)) {
           // If a file or folder matches ignore patterns, we consider the dir as non-empty (safer)
           return false;
+        }
+        // Optionally ignore __init__.py so a folder containing only it can be considered empty
+        if (ignoreInitPy && name === '__init__.py') {
+          continue;
         }
 
         const fullPath = path.join(dir, name);
@@ -84,10 +90,10 @@ export async function getEmptyFolders(rootPath: string, options: ScanOptions = {
   return unique;
 }
 
-export async function deleteFolders(folderPaths: string[], options: { dryRun?: boolean } = {}): Promise<{ deleted: string[], failed: { path: string, error: string }[] }> {
+export async function deleteFolders(folderPaths: string[], options: { dryRun?: boolean, ignoreInitPy?: boolean } = {}): Promise<{ deleted: string[], failed: { path: string, error: string }[] }> {
   const deleted: string[] = [];
   const failed: { path: string, error: string }[] = [];
-  const { dryRun = false } = options;
+  const { dryRun = false, ignoreInitPy = false } = options;
 
   // Ensure we delete deepest folders first
   const paths = [...folderPaths].sort((a, b) => b.length - a.length);
@@ -98,6 +104,11 @@ export async function deleteFolders(folderPaths: string[], options: { dryRun?: b
       continue;
     }
     try {
+      if (ignoreInitPy) {
+        // Try removing __init__.py if present so rmdir can succeed
+        const initFile = path.join(dir, '__init__.py');
+        try { await fs.unlink(initFile); } catch { /* ignore if not present */ }
+      }
       // Use rmdir to ensure it's empty; fallback to rm if necessary
       await fs.rmdir(dir);
       deleted.push(dir);
@@ -121,7 +132,7 @@ export async function deleteFolders(folderPaths: string[], options: { dryRun?: b
   return { deleted, failed };
 }
 
-export async function isDirectoryEmpty(dirPath: string, includeHidden = false, ignorePatterns: string[] = ['.git', 'node_modules', '.vscode']): Promise<boolean> {
+export async function isDirectoryEmpty(dirPath: string, includeHidden = false, ignorePatterns: string[] = ['.git', 'node_modules', '.vscode'], ignoreInitPy = false): Promise<boolean> {
   try {
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
     if (!entries || entries.length === 0) {
@@ -134,6 +145,9 @@ export async function isDirectoryEmpty(dirPath: string, includeHidden = false, i
       }
       if (matchesIgnore(name, ignorePatterns)) {
         return false;
+      }
+      if (ignoreInitPy && name === '__init__.py') {
+        continue;
       }
       if (entry.isDirectory()) {
         const subPath = path.join(dirPath, name);
